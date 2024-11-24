@@ -84,7 +84,7 @@ pipeline {
     post {
         always {
             script {
-                emailNotification('aswin@crunchops.com')
+                emailNotification('sulaiman@crunchops.com')
             }
         }
     }
