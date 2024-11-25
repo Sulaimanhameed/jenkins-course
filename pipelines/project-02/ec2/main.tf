@@ -23,7 +23,7 @@ resource "aws_instance" "example" {
     Name = "EC2Instance"
   }
 
-  key_name = "aswin-key"
+  key_name = "sulaiman"
   vpc_security_group_ids = ["sg-0fe4363da3994c100"]
 
   root_block_device {
