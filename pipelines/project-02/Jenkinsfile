@@ -28,9 +28,9 @@ pipeline {
         }
         stage('Terraform Init') {
             steps {
-                withAWS(credentials: 'my-aws-credentials', region: 'us-west-2') {
-                    container('terraform') {
-                        script {
+                script {
+                    withAWS(credentials: 'my-aws-credentials', region: 'us-west-2') {
+                        container('terraform') {
                             terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
                         }
                     }
