@@ -8,28 +8,10 @@ pipeline {
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select whether to apply or destroy infrastructure.')
     }
 
-    environment {
-        AWS_DEFAULT_REGION = 'us-west-2'
-    }
-
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-        stage('Setup AWS CLI') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    sh '''
-                    aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-                    aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                    aws configure set default.region $AWS_DEFAULT_REGION
-                    '''
-                }
             }
         }
         stage('Tflint') {
@@ -38,14 +20,32 @@ pipeline {
             }
             steps {
                 container('terraform') {
-                    sh 'tflint pipeline/project-02/ec2'
+                    script {
+                        tfLint('pipelines/project-02/ec2')
+                    }
                 }
             }
         }
         stage('Terraform Init') {
             steps {
+                withAWS(credentials: 'my-aws-credentials', region: 'us-west-2') {
+                    container('terraform') {
+                        script {
+                            terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
+                        }
+                    }
+                }
+            }
+        }
+        stage('Checkov') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
                 container('terraform') {
-                    sh 'terraform init -backend-config="bucket=cat-jenkins-terraform " -backend-config="key=jenkins/terraform.tfstate" -backend-config="region=$AWS_DEFAULT_REGION" pipeline/project-02/ec2'
+                    script {
+                        checkovScan('pipelines/project-02/ec2')
+                    }
                 }
             }
         }
@@ -55,7 +55,9 @@ pipeline {
             }
             steps {
                 container('terraform') {
-                    sh 'terraform plan -out=plan.out pipeline/project-02/ec2'
+                    script {
+                        terraform.plan('pipelines/project-02/ec2')
+                    }
                 }
             }
         }
@@ -72,9 +74,9 @@ pipeline {
                 container('terraform') {
                     script {
                         if (params.ACTION == 'apply') {
-                            sh 'terraform apply -auto-approve plan.out'
+                            terraform.apply('pipelines/project-02/ec2')
                         } else if (params.ACTION == 'destroy') {
-                            sh 'terraform destroy -auto-approve pipeline/project-02/ec2'
+                            terraform.destroy('pipelines/project-02/ec2')
                         }
                     }
                 }
