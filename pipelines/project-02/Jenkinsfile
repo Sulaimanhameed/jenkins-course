@@ -1,19 +1,21 @@
 @Library('jenkins-shared-library@master') _
+
 pipeline {
     agent {
         label 'terraform-build-agent'
     }
-
+    
     parameters {
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select whether to apply or destroy infrastructure.')
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
+        
         stage('Tflint') {
             when {
                 expression { params.ACTION == 'apply' }
@@ -26,6 +28,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Terraform Init') {
             steps {
                 withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
@@ -37,6 +40,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Checkov') {
             when {
                 expression { params.ACTION == 'apply' }
@@ -49,19 +53,22 @@ pipeline {
                 }
             }
         }
+        
         stage('Terraform Plan') {
             when {
                 expression { params.ACTION == 'apply' }
             }
             steps {
-                 withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
-                container('terraform') {
-                    script {
-                        terraform.plan('pipelines/project-02/ec2')
+                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    container('terraform') {
+                        script {
+                            terraform.plan('pipelines/project-02/ec2')
+                        }
                     }
                 }
             }
         }
+        
         stage('Terraform Apply/Destroy') {
             when {
                 allOf {
@@ -72,19 +79,21 @@ pipeline {
                 }
             }
             steps {
-                 withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
-                container('terraform') {
-                    script {
-                        if (params.ACTION == 'apply') {
-                            terraform.apply('pipelines/project-02/ec2')
-                        } else if (params.ACTION == 'destroy') {
-                            terraform.destroy('pipelines/project-02/ec2')
+                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    container('terraform') {
+                        script {
+                            if (params.ACTION == 'apply') {
+                                terraform.apply('pipelines/project-02/ec2')
+                            } else if (params.ACTION == 'destroy') {
+                                terraform.destroy('pipelines/project-02/ec2')
+                            }
                         }
                     }
                 }
             }
         }
     }
+    
     post {
         always {
             script {
