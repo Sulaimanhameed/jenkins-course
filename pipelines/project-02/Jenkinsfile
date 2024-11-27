@@ -28,10 +28,11 @@ pipeline {
         }
         stage('Terraform Init') {
             steps {
-                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2')
-                container('terraform') {
-                    script {
-                        terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform ', 'jenkins/terraform.tfstate', 'us-west-2')
+                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    container('terraform') {
+                        script {
+                            terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
+                        }
                     }
                 }
             }
@@ -53,7 +54,6 @@ pipeline {
                 expression { params.ACTION == 'apply' }
             }
             steps {
-                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2')
                 container('terraform') {
                     script {
                         terraform.plan('pipelines/project-02/ec2')
@@ -71,7 +71,6 @@ pipeline {
                 }
             }
             steps {
-                withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2')
                 container('terraform') {
                     script {
                         if (params.ACTION == 'apply') {
