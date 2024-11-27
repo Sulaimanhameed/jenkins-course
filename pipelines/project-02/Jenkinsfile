@@ -54,6 +54,7 @@ pipeline {
                 expression { params.ACTION == 'apply' }
             }
             steps {
+                 withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
                 container('terraform') {
                     script {
                         terraform.plan('pipelines/project-02/ec2')
@@ -71,6 +72,7 @@ pipeline {
                 }
             }
             steps {
+                 withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
                 container('terraform') {
                     script {
                         if (params.ACTION == 'apply') {
