@@ -15,8 +15,8 @@ provider "aws" {
 }
 
 resource "aws_instance" "example" {
-  ami           = "ami-05134c8ef96964280"
-  instance_type = "t3.micro"
+  ami           = "ami-055e3d4f0bbeb5878"
+  instance_type = "t2.micro"
   monitoring    = true
 
   tags = {
@@ -24,7 +24,7 @@ resource "aws_instance" "example" {
   }
 
   key_name = "sulaiman"
-  vpc_security_group_ids = ["sg-0fe4363da3994c100"]
+  vpc_security_group_ids = ["sg-0d5b17c6e9222e9be"]
 
   root_block_device {
     volume_size = 8
