@@ -11,6 +11,8 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-west-2'
+        TF_VAR_aws_access_key = "${env.AWS_ACCESS_KEY_ID}"
+        TF_VAR_aws_secret_key = "${env.AWS_SECRET_ACCESS_KEY}"
     }
     
     stages {
