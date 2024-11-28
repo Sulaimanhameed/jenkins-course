@@ -5,20 +5,31 @@ pipeline {
         label 'terraform-build-agent'
     }
     
-    environment {
-        AWS_CREDENTIALS = aws-jenkins-credentials
-        TF_VAR_aws_access_key = "${env.AWS_CREDENTIALS_USR}"
-        TF_VAR_aws_secret_key = "${env.AWS_CREDENTIALS_PSW}"
-    }
-    
     parameters {
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select whether to apply or destroy infrastructure.')
+    }
+    
+    environment {
+        AWS_REGION = 'us-west-2'
     }
     
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+        
+        stage('Set Credentials') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'aws-jenkins-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        env.TF_VAR_aws_access_key = env.AWS_ACCESS_KEY_ID
+                        env.TF_VAR_aws_secret_key = env.AWS_SECRET_ACCESS_KEY
+                    }
+                }
             }
         }
         
@@ -39,7 +50,7 @@ pipeline {
             steps {
                 container('terraform') {
                     script {
-                        terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
+                        terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', env.AWS_REGION)
                     }
                 }
             }
@@ -79,7 +90,6 @@ pipeline {
                         changeRequest()
                     }
                 }
-            }
             steps {
                 container('terraform') {
                     script {
