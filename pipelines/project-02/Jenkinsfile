@@ -5,6 +5,12 @@ pipeline {
         label 'terraform-build-agent'
     }
     
+    environment {
+        AWS_CREDENTIALS = credentials('aws-jenkins-credentials')
+        TF_VAR_aws_access_key = "${env.AWS_CREDENTIALS_USR}"
+        TF_VAR_aws_secret_key = "${env.AWS_CREDENTIALS_PSW}"
+    }
+    
     parameters {
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select whether to apply or destroy infrastructure.')
     }
@@ -33,7 +39,7 @@ pipeline {
             steps {
                 container('terraform') {
                     script {
-                        terraformWithCredentials('init', 'pipelines/project-02/ec2')
+                        terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
                     }
                 }
             }
@@ -59,7 +65,7 @@ pipeline {
             steps {
                 container('terraform') {
                     script {
-                        terraformWithCredentials('plan', 'pipelines/project-02/ec2')
+                        terraform.plan('pipelines/project-02/ec2')
                     }
                 }
             }
@@ -77,8 +83,11 @@ pipeline {
             steps {
                 container('terraform') {
                     script {
-                        def action = params.ACTION == 'apply' ? 'apply' : 'destroy'
-                        terraformWithCredentials(action, 'pipelines/project-02/ec2')
+                        if (params.ACTION == 'apply') {
+                            terraform.apply('pipelines/project-02/ec2')
+                        } else if (params.ACTION == 'destroy') {
+                            terraform.destroy('pipelines/project-02/ec2')
+                        }
                     }
                 }
             }
