@@ -37,7 +37,7 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    withAWS(region: 'us-west-2') {
                         container('terraform') {
                             script {
                                 withEnv([
@@ -78,7 +78,7 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    withAWS(region: 'us-west-2') {
                         container('terraform') {
                             script {
                                 withEnv([
@@ -111,7 +111,7 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
+                    withAWS(region: 'us-west-2') {
                         container('terraform') {
                             script {
                                 withEnv([
