@@ -4,85 +4,71 @@ pipeline {
     agent {
         label 'terraform-build-agent'
     }
-
+    
     parameters {
-        choice(
-            name: 'ACTION', 
-            choices: ['apply', 'destroy'], 
-            description: 'Select whether to apply or destroy infrastructure.'
-        )
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select whether to apply or destroy infrastructure.')
     }
-
+    
     environment {
         AWS_REGION = 'us-west-2'
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
+        
         stage('Set Credentials') {
             steps {
                 script {
                     withCredentials([
-                        usernamePassword(
-                            credentialsId: 'aws-jenkins-credentials', 
-                            usernameVariable: 'AWS_ACCESS_KEY_ID', 
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        )
+                        usernamePassword(credentialsId: 'aws-jenkins-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
                     ]) {
-                        env.TF_VAR_aws_access_key = AWS_ACCESS_KEY_ID
-                        env.TF_VAR_aws_secret_key = AWS_SECRET_ACCESS_KEY
+                        env.TF_VAR_aws_access_key = env.AWS_ACCESS_KEY_ID
+                        env.TF_VAR_aws_secret_key = env.AWS_SECRET_ACCESS_KEY
                     }
                 }
             }
         }
-
-        stage('Validate') {
+        
+        stage('Tflint') {
             when {
                 expression { params.ACTION == 'apply' }
             }
-            parallel {
-                stage('Tflint') {
-                    steps {
-                        container('terraform') {
-                            script {
-                                tfLint('pipelines/project-02/ec2')
-                            }
-                        }
-                    }
-                }
-
-                stage('Checkov Security Scan') {
-                    steps {
-                        container('terraform') {
-                            script {
-                                checkovScan('pipelines/project-02/ec2')
-                            }
-                        }
+            steps {
+                container('terraform') {
+                    script {
+                        tfLint('pipelines/project-02/ec2')
                     }
                 }
             }
         }
-
+        
         stage('Terraform Init') {
             steps {
                 container('terraform') {
                     script {
-                        terraform.init(
-                            'pipelines/project-02/ec2', 
-                            'cat-jenkins-terraform', 
-                            'jenkins/terraform.tfstate', 
-                            env.AWS_REGION
-                        )
+                        terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', env.AWS_REGION)
                     }
                 }
             }
         }
-
+        
+        stage('Checkov') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                container('terraform') {
+                    script {
+                        checkovScan('pipelines/project-02/ec2')
+                    }
+                }
+            }
+        }
+        
         stage('Terraform Plan') {
             when {
                 expression { params.ACTION == 'apply' }
@@ -95,12 +81,14 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Terraform Apply/Destroy') {
             when {
                 allOf {
                     branch 'main'
-                    expression { !env.CHANGE_ID }
+                    not {
+                        changeRequest()
+                    }
                 }
             }
             steps {
@@ -116,16 +104,12 @@ pipeline {
             }
         }
     }
-
+    
     post {
         always {
             script {
                 emailNotification('sulaiman@crunchops.com')
             }
-        }
-        
-        cleanup {
-            deleteDir()
         }
     }
 }
