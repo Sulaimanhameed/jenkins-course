@@ -1,4 +1,5 @@
 @Library('jenkins-shared-library@master') _
+
 pipeline {
     agent {
         label 'terraform-build-agent'
@@ -37,14 +38,13 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                        container('terraform') {
-                            script {
-                                withEnv([
-                                    "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
-                                    "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
-                                ]) {
-                                    terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
-                                }
+                    container('terraform') {
+                        script {
+                            withEnv([
+                                "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
+                                "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
+                            ]) {
+                                terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
                             }
                         }
                     }
@@ -77,14 +77,13 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                        container('terraform') {
-                            script {
-                                withEnv([
-                                    "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
-                                    "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
-                                ]) {
-                                    terraform.plan('pipelines/project-02/ec2')
-                                }
+                    container('terraform') {
+                        script {
+                            withEnv([
+                                "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
+                                "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
+                            ]) {
+                                terraform.plan('pipelines/project-02/ec2')
                             }
                         }
                     }
@@ -109,17 +108,16 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                        container('terraform') {
-                            script {
-                                withEnv([
-                                    "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
-                                    "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
-                                ]) {
-                                    if (params.ACTION == 'apply') {
-                                        terraform.apply('pipelines/project-02/ec2')
-                                    } else if (params.ACTION == 'destroy') {
-                                        terraform.destroy('pipelines/project-02/ec2')
-                                    }
+                    container('terraform') {
+                        script {
+                            withEnv([
+                                "TF_VAR_aws_access_key=${env.AWS_ACCESS_KEY_ID}",
+                                "TF_VAR_aws_secret_key=${env.AWS_SECRET_ACCESS_KEY}"
+                            ]) {
+                                if (params.ACTION == 'apply') {
+                                    terraform.apply('pipelines/project-02/ec2')
+                                } else if (params.ACTION == 'destroy') {
+                                    terraform.destroy('pipelines/project-02/ec2')
                                 }
                             }
                         }
