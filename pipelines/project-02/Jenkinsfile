@@ -15,6 +15,21 @@ pipeline {
             }
         }
         
+        stage('Terraform Credentials') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-jenkins-credentials', 
+                        usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    // You can add additional credential-related steps here if needed
+                    sh 'echo "Credentials loaded securely"'
+                }
+            }
+        }
+        
         stage('Tflint') {
             when {
                 expression { params.ACTION == 'apply' }
@@ -31,10 +46,13 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
+                    usernamePassword(
+                        credentialsId: 'aws-jenkins-credentials', 
+                        usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
                 ]) {
-                    withAWS(region: 'us-west-2') {
+                    withAWS(credentials: 'aws-jenkins-credentials', region: 'us-west-2') {
                         container('terraform') {
                             script {
                                 terraform.init('pipelines/project-02/ec2', 'cat-jenkins-terraform', 'jenkins/terraform.tfstate', 'us-west-2')
@@ -46,35 +64,6 @@ pipeline {
         }
         
         // ... (rest of the pipeline remains the same)
-        
-        stage('Terraform Apply/Destroy') {
-            when {
-                allOf {
-                    branch 'main'
-                    not {
-                        changeRequest()
-                    }
-                }
-            }
-            steps {
-                withCredentials([
-                    string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
-                    string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    withAWS(region: 'us-west-2') {
-                        container('terraform') {
-                            script {
-                                if (params.ACTION == 'apply') {
-                                    terraform.apply('pipelines/project-02/ec2')
-                                } else if (params.ACTION == 'destroy') {
-                                    terraform.destroy('pipelines/project-02/ec2')
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
     
     post {
