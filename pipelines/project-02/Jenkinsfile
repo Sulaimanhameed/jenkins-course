@@ -11,7 +11,7 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-west-2'
-        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
     
@@ -19,19 +19,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-        
-        stage('Set Credentials') {
-            steps {
-                script {
-                    withCredentials([
-                        usernamePassword(credentialsId: 'aws-jenkins-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
-                    ]) {
-                        env.TF_VAR_aws_access_key = env.AWS_ACCESS_KEY_ID
-                        env.TF_VAR_aws_secret_key = env.AWS_SECRET_ACCESS_KEY
-                    }
-                }
             }
         }
         
