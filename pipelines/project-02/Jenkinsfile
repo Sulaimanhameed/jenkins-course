@@ -10,11 +10,12 @@ pipeline {
     }
     
     environment {
-    AWS_REGION = 'us-west-2'
-    AWS_CREDENTIALS = credentials('aws-jenkins-credentials')
-    TF_VAR_aws_access_key = "${AWS_CREDENTIALS_USR}"
-    TF_VAR_aws_secret_key = "${AWS_CREDENTIALS_PSW}"
-}
+        AWS_REGION = 'us-west-2'
+        AWS_CREDENTIALS = credentials('aws-jenkins-credentials')
+        TF_VAR_aws_access_key = "${AWS_CREDENTIALS_USR}"
+        TF_VAR_aws_secret_key = "${AWS_CREDENTIALS_PSW}"
+        TF_IN_AUTOMATION = 'true'
+    }
     
     stages {
         stage('Checkout') {
